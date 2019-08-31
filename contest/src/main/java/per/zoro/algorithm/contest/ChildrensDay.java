@@ -9,7 +9,7 @@ public abstract class ChildrensDay {
 
     public static void main(String[] args) {
         char nextChar = 'a';
-        for (int i = 3; i < 1100; i++) {
+        for (int i = 3; i < 11; i++) {
             nextChar = printN(i, nextChar);
         }
     }
