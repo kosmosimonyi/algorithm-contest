@@ -9,7 +9,7 @@ public abstract class ChildrensDay {
 
     public static void main(String[] args) {
         char nextChar = 'a';
-        for (int i = 3; i < 11; i++) {
+        for (int i = 3; i < 1100; i++) {
             nextChar = printN(i, nextChar);
         }
     }
@@ -55,8 +55,9 @@ public abstract class ChildrensDay {
         }
         int charIndex = firstChar + offset;
         if (charIndex > 'z') {
-            charIndex = ('a' - 1) + (charIndex - 'z');
+            charIndex = 'a' + ((charIndex - 'z') % 26);
         }
+        assert charIndex >= 'a' && charIndex <= 'z';
         return (char) charIndex;
     }
 
