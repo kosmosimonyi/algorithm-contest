@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>视频播放器</title>
+    <script type="application/javascript">
+
+        function documentLoad() {
+            initVideo();
+        }
+
+        function dragFileOver(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        }
+
+        function dragFileDrop(event) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            let fileArray, file, videoInfo;
+            fileArray = event.dataTransfer.files;
+            const arrayLength = fileArray.length;
+
+            const videoInfoArray = [];
+
+            for (let i = 0; i < arrayLength; i++) {
+                file = fileArray[i];
+                if (file.type !== 'video/mp4') {
+                    continue;
+                }
+
+                videoInfo = {
+                    name: file.name,
+                    url: URL.createObjectURL(file).toString()
+                };
+
+                videoInfoArray.push(videoInfo);
+
+            } // for loop
+
+
+            if (videoInfoArray.length > 0) {
+                loadVideoInfoArrayToPlayList(videoInfoArray);
+            }
+
+        }
+
+        function loadVideoInfoArrayToPlayList(videoInfoArray) {
+
+            const arrayLength = videoInfoArray.length;
+            const video = document.getElementById('myVideo');
+            const notExistsSource = video.querySelector('source') == null;
+
+            const ol = document.querySelector('#videoItemList');
+            const existsVideoItem = ol.querySelector('li') != null;
+
+            let videoInfo, source, firstSource = null;
+            for (let i = 0; i < arrayLength; i++) {
+                videoInfo = videoInfoArray[i];
+
+                if (existsVideoItem && i === 0 && arrayLength > 1) {
+                    const separator = document.createElement('li');
+                    separator.classList.add('items-separator');
+                    separator.appendChild(document.createElement('br'));
+                    ol.appendChild(separator);
+                }
+
+                source = getOrCreateSource(video, videoInfo);
+                if (firstSource == null) {
+                    firstSource = source;
+                }
+            } // for loop
+
+            if (firstSource != null && notExistsSource) {
+                video.src = firstSource.src;
+                document.title = getVideoName(firstSource.getAttribute("data-video-name"));
+                video.play();
+            }
+
+
+        }
+
+        function getOrCreateSource(video, videoInfo) {
+            let sourceList, existsSource = null, newSource;
+
+            sourceList = document.querySelectorAll("#myVideo > source");
+
+            const listSize = sourceList.length;
+            for (let i = 0; i < listSize; i++) {
+                if (sourceList[i].getAttribute("data-video-name") === videoInfo.name) {
+                    existsSource = sourceList[i];
+                    break;
+                }
+            }
+
+            if (existsSource == null) {
+                newSource = document.createElement('source');
+                newSource.src = videoInfo.url;
+                newSource.setAttribute("data-video-name", videoInfo.name);
+                video.appendChild(newSource)
+
+                addVideoToList(videoInfo.name);
+            } else {
+                newSource = existsSource;
+            }
+            return newSource;
+        }
+
+        function getVideoName(fileName) {
+            const index = fileName.lastIndexOf('.mp4');
+            let videoName;
+            if (index > 0) {
+                videoName = fileName.substring(0, index);
+            } else {
+                videoName = fileName;
+            }
+            return videoName;
+        }
+
+
+        function mouseMoveToVideo(event) {
+            let viewPortWidth;
+            viewPortWidth = window.innerWidth || document.documentElement.clientWidth;
+
+            const div = document.getElementById('myVideoList');
+            if (viewPortWidth - event.clientX < 30) {
+                if (div.hidden === true) {
+                    div.hidden = false;
+                    div.style.zIndex = '9999';
+                }
+            } else {
+                const viewPortWidth = window.innerWidth || document.documentElement.clientWidth;
+                if (event.clientX < (viewPortWidth - div.offsetWidth)) {
+                    hiddenVideoList(div);
+                }
+            }
+
+        }
+
+        function mouseMoveOutVideoListDiv(event) {
+            const div = document.getElementById('myVideoList');
+            const viewPortWidth = window.innerWidth || document.documentElement.clientWidth;
+            if (viewPortWidth - event.clientX < 10) {
+                hiddenVideoList(div);
+            }
+
+        }
+
+        function hiddenVideoList(div) {
+            div.hidden = true;
+            div.style.zIndex = '-1';
+        }
+
+        function playSelectedVideo(event) {
+            let li, sourceList;
+            li = event.target;
+
+            sourceList = document.querySelectorAll("#myVideo > source");
+            const listSize = sourceList.length;
+            const videoName = li.getAttribute("data-video-name");
+            let source;
+            for (let i = 0; i < listSize; i++) {
+                source = sourceList[i];
+                if (videoName !== source.getAttribute("data-video-name")) {
+                    continue;
+                }
+                let video;
+                video = document.getElementById('myVideo');
+                video.src = source.src;
+                document.title = li.innerHTML;
+                video.play();
+                break
+            }
+
+        }
+
+
+        function addVideoToList(videoName) {
+            let div, liList, li;
+            div = document.getElementById('myVideoList');
+            if (div == null) {
+                return
+            }
+            liList = div.querySelectorAll('#videoItemList > li');
+            const listSize = liList.length;
+            li = null;
+            for (let i = 0; i < listSize; i++) {
+                if (liList[i].getAttribute('data-video-name') === videoName) {
+                    li = liList[i];
+                    break
+                }
+            }
+            if (li == null) {
+                li = createVideoItemElement(videoName);
+                let ol;
+                ol = div.querySelector('#videoItemList');
+                ol.appendChild(li);
+            }
+        }
+
+        function createVideoItemElement(videoName) {
+            let li;
+            li = document.createElement('li');
+            li.classList.add('video-item');
+            li.setAttribute("data-video-name", videoName);
+
+            videoName = getVideoName(videoName);
+            li.innerHTML = videoName;
+            li.addEventListener("dblclick", playSelectedVideo);
+            return li;
+        }
+
+        function initVideo() {
+            let video;
+            video = document.getElementById('myVideo');
+
+            video.addEventListener('dragover', dragFileOver);
+            video.addEventListener('drop', dragFileDrop);
+            video.addEventListener('mousemove', mouseMoveToVideo);
+
+            const div = document.getElementById('myVideoList');
+            div.addEventListener('mouseout', mouseMoveOutVideoListDiv);
+
+        }
+
+
+        function continuePlay() {
+
+            let video;
+            video = document.getElementById('myVideo');
+            let sourceList;
+            sourceList = video.querySelectorAll("source");
+            const listSize = sourceList.length;
+            for (let i = 0; i < listSize; i++) {
+                if (sourceList[i].src === video.src) {
+                    let source = sourceList[(i + 1) % listSize];
+                    video.src = source.src;
+                    document.title = getVideoName(source.getAttribute('data-video-name'));
+                    video.play();
+                    break;
+                }
+            }
+        }
+
+    </script>
+
+    <style>
+        .video-item:hover {
+            cursor: pointer;
+        }
+
+        .video-item:active {
+            color: blue;
+        }
+
+        .video-item:visited {
+            color: gray;
+        }
+    </style>
+
+</head>
+<body style="width:100% ; height:100%;padding: 0;margin: 0; background-color: black;" onload="documentLoad()">
+<div id="myZone" style="width:100% ; height:100%; padding: 0;margin: 0;">
+    <video id="myVideo" autoplay controls muted preload="auto"
+           style="width: 100%; height:100% ; padding:0;margin: 0; position: fixed;left: auto;right: auto; top: 0; bottom: 0; z-index: 100;"
+           poster="宋轶-消防员.jpeg"
+           onended="continuePlay()">
+    </video>
+</div>
+<div id="myVideoList" hidden="hidden"
+     style="background-color: black; color: white; position: fixed; z-index: -1; border-color: red; top: 0; bottom: 0; right: 0; width: 400px;">
+    <div style="width: 100%; height: 100%; margin: 20px 0 20px 20px; overflow: scroll;">
+        <ol id="videoItemList" start="1" style="margin: 10px 0 10px; "></ol>
+    </div>
+</div>
+</body>
+</html>
