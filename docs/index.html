@@ -7,6 +7,13 @@
 
         function documentLoad() {
             initVideo();
+            document.addEventListener("focusout", documentFocusOutHandle);
+        }
+
+        function documentFocusOutHandle() {
+            const div = document.getElementById('myVideoList');
+            hiddenVideoList(div);
+
         }
 
         function dragFileOver(event) {
@@ -149,8 +156,11 @@
         }
 
         function hiddenVideoList(div) {
-            div.hidden = true;
-            div.style.zIndex = '-1';
+            if (!div.hidden) {
+                div.hidden = true;
+                div.style.zIndex = '-1';
+            }
+
         }
 
         function playSelectedVideo(event) {
