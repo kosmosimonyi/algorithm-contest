@@ -14,6 +14,7 @@
             hiddenVideoList();
         }
 
+
         function dragFileOver(event) {
             event.stopPropagation();
             event.preventDefault();
@@ -126,48 +127,6 @@
         }
 
 
-        function mouseMoveToVideo(event) {
-            let viewPortWidth;
-            viewPortWidth = window.innerWidth || document.documentElement.clientWidth;
-
-            const div = document.getElementById('myVideoList');
-            if (viewPortWidth - event.clientX < 30) {
-                if (div.hidden === true) {
-                    showVideoList(div);
-                }
-            } else {
-                const viewPortWidth = window.innerWidth || document.documentElement.clientWidth;
-                if (event.clientX < (viewPortWidth - div.offsetWidth)) {
-                    hiddenVideoList(div);
-                }
-            }
-
-        }
-
-        function mouseMoveOutVideoListDiv(event) {
-            const div = document.getElementById('myVideoList');
-            const viewPortWidth = window.innerWidth || document.documentElement.clientWidth;
-            if (viewPortWidth - event.clientX < 10) {
-                hiddenVideoList(div);
-            }
-
-        }
-
-        function showVideoList(div = document.getElementById('myVideoList')) {
-            if (div.hidden === true && div.querySelector('li.video-item') != null) {
-                div.hidden = false;
-                div.style.zIndex = '9999';
-            }
-        }
-
-        function hiddenVideoList(div = document.getElementById('myVideoList')) {
-            if (!div.hidden) {
-                div.hidden = true;
-                div.style.zIndex = '-1';
-            }
-        }
-
-
         function playVideo(source) {
             const video = source.parentNode;
             video.src = source.src;
@@ -240,6 +199,49 @@
             const div = document.getElementById('myVideoList');
             div.addEventListener('mouseout', mouseMoveOutVideoListDiv);
 
+        }
+
+
+        function mouseMoveToVideo(event) {
+
+            let viewPortWidth;
+            viewPortWidth = window.innerWidth || document.documentElement.clientWidth;
+
+            //console.log('目标是 ' + event.target);
+            const div = document.getElementById('myVideoList');
+            if (div.hidden === true) {
+                if (viewPortWidth - event.clientX < 30 && document.hasFocus()) {
+                    showVideoList(div);
+                }
+            } else if (event.clientX < (viewPortWidth - div.offsetWidth)) {
+                hiddenVideoList(div);
+            }
+        }
+
+
+        function mouseMoveOutVideoListDiv(event) {
+            const div = document.getElementById('myVideoList');
+            const viewPortWidth = window.innerWidth || document.documentElement.clientWidth;
+
+            if (event.clientX < (viewPortWidth - div.offsetWidth + 2)
+                || viewPortWidth - event.clientX < 2) {
+                hiddenVideoList(div);
+            }
+
+        }
+
+        function showVideoList(div = document.getElementById('myVideoList')) {
+            if (div.hidden === true && div.querySelector('li.video-item') != null) {
+                div.hidden = false;
+                div.style.zIndex = '9999';
+            }
+        }
+
+        function hiddenVideoList(div = document.getElementById('myVideoList')) {
+            if (!div.hidden) {
+                div.hidden = true;
+                div.style.zIndex = '-1';
+            }
         }
 
 
