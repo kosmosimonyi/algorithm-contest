@@ -7,13 +7,11 @@
 
         function documentLoad() {
             initVideo();
-            document.addEventListener("focusout", documentFocusOutHandle);
+            window.addEventListener("blur", windowBlurHandle);
         }
 
-        function documentFocusOutHandle() {
-            const div = document.getElementById('myVideoList');
-            hiddenVideoList(div);
-
+        function windowBlurHandle() {
+            hiddenVideoList();
         }
 
         function dragFileOver(event) {
@@ -39,7 +37,7 @@
                 }
 
                 videoInfo = {
-                    name: file.name,
+                    name: getVideoName(file.name),
                     url: URL.createObjectURL(file).toString()
                 };
 
@@ -67,7 +65,10 @@
             for (let i = 0; i < arrayLength; i++) {
                 videoInfo = videoInfoArray[i];
 
-                if (existsVideoItem && i === 0 && arrayLength > 1) {
+                if (existsVideoItem
+                    && i === 0
+                    && arrayLength > 1
+                    && ol.querySelector('li[data-video-name="' + videoInfo.name + '"]') == null) {
                     const separator = document.createElement('li');
                     separator.classList.add('items-separator');
                     separator.appendChild(document.createElement('br'));
@@ -81,9 +82,7 @@
             } // for loop
 
             if (firstSource != null && notExistsSource) {
-                video.src = firstSource.src;
-                document.title = getVideoName(firstSource.getAttribute("data-video-name"));
-                video.play();
+                playVideo(firstSource);
             }
 
 
@@ -108,7 +107,7 @@
                 newSource.setAttribute("data-video-name", videoInfo.name);
                 video.appendChild(newSource)
 
-                addVideoToList(videoInfo.name);
+                addVideoToList(videoInfo);
             } else {
                 newSource = existsSource;
             }
@@ -134,8 +133,7 @@
             const div = document.getElementById('myVideoList');
             if (viewPortWidth - event.clientX < 30) {
                 if (div.hidden === true) {
-                    div.hidden = false;
-                    div.style.zIndex = '9999';
+                    showVideoList(div);
                 }
             } else {
                 const viewPortWidth = window.innerWidth || document.documentElement.clientWidth;
@@ -155,39 +153,48 @@
 
         }
 
-        function hiddenVideoList(div) {
+        function showVideoList(div = document.getElementById('myVideoList')) {
+            if (div.hidden === true && div.querySelector('li.video-item') != null) {
+                div.hidden = false;
+                div.style.zIndex = '9999';
+            }
+        }
+
+        function hiddenVideoList(div = document.getElementById('myVideoList')) {
             if (!div.hidden) {
                 div.hidden = true;
                 div.style.zIndex = '-1';
             }
+        }
 
+
+        function playVideo(source) {
+            const video = source.parentNode;
+            video.src = source.src;
+            document.title = source.getAttribute("data-video-name");
+            video.play();
         }
 
         function playSelectedVideo(event) {
-            let li, sourceList;
-            li = event.target;
-
-            sourceList = document.querySelectorAll("#myVideo > source");
+            const li = event.target;
+            const sourceList = document.querySelectorAll("#myVideo > source");
             const listSize = sourceList.length;
-            const videoName = li.getAttribute("data-video-name");
-            let source;
+            const videoUrl = li.getAttribute("data-video-url");
+
+            let source = null;
             for (let i = 0; i < listSize; i++) {
                 source = sourceList[i];
-                if (videoName !== source.getAttribute("data-video-name")) {
-                    continue;
+                if (videoUrl === source.src) {
+                    playVideo(source);
+                    break
                 }
-                let video;
-                video = document.getElementById('myVideo');
-                video.src = source.src;
-                document.title = li.innerHTML;
-                video.play();
-                break
+
             }
 
         }
 
 
-        function addVideoToList(videoName) {
+        function addVideoToList(videoInfo) {
             let div, liList, li;
             div = document.getElementById('myVideoList');
             if (div == null) {
@@ -197,27 +204,27 @@
             const listSize = liList.length;
             li = null;
             for (let i = 0; i < listSize; i++) {
-                if (liList[i].getAttribute('data-video-name') === videoName) {
+                if (liList[i].getAttribute('data-video-url') === videoInfo.url) {
                     li = liList[i];
                     break
                 }
             }
             if (li == null) {
-                li = createVideoItemElement(videoName);
+                li = createVideoItemElement(videoInfo);
                 let ol;
                 ol = div.querySelector('#videoItemList');
                 ol.appendChild(li);
             }
         }
 
-        function createVideoItemElement(videoName) {
+        function createVideoItemElement(videoInfo) {
             let li;
             li = document.createElement('li');
             li.classList.add('video-item');
-            li.setAttribute("data-video-name", videoName);
+            li.setAttribute("data-video-name", videoInfo.name);
+            li.setAttribute("data-video-url", videoInfo.url);
 
-            videoName = getVideoName(videoName);
-            li.innerHTML = videoName;
+            li.innerHTML = videoInfo.name;
             li.addEventListener("dblclick", playSelectedVideo);
             return li;
         }
@@ -245,10 +252,7 @@
             const listSize = sourceList.length;
             for (let i = 0; i < listSize; i++) {
                 if (sourceList[i].src === video.src) {
-                    let source = sourceList[(i + 1) % listSize];
-                    video.src = source.src;
-                    document.title = getVideoName(source.getAttribute('data-video-name'));
-                    video.play();
+                    playVideo(sourceList[(i + 1) % listSize]);
                     break;
                 }
             }
