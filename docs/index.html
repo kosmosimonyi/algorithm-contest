@@ -246,12 +246,10 @@
         }
 
 
-        function continuePlay() {
+        function playEndedHandler() {
 
-            let video;
-            video = document.getElementById('myVideo');
-            let sourceList;
-            sourceList = video.querySelectorAll("source");
+            const video = document.getElementById('myVideo');
+            const sourceList = video.querySelectorAll("source");
             const listSize = sourceList.length;
             for (let i = 0; i < listSize; i++) {
                 if (sourceList[i].src === video.src) {
@@ -260,6 +258,51 @@
                 }
             }
         }
+
+        function playErrorHandler() {
+            const video = document.getElementById('myVideo');
+            const sourceList = video.querySelectorAll("source");
+            const sourceListSize = sourceList.length;
+
+            let source = null, srcIndex = -1;
+            for (let i = 0; i < sourceListSize; i++) {
+                if (sourceList[i].src === video.src) {
+                    source = sourceList[i];
+                    srcIndex = i;
+                    break;
+                }
+            }
+
+            if (source == null) {
+                return
+            }
+
+            const ol = document.getElementById('videoItemList');
+            const liList = ol.querySelectorAll('li');
+            const liListSize = liList.length;
+            let prevLi = null, li;
+            for (let i = 0; i < liListSize; i++) {
+                li = liList[i];
+                if (li.getAttribute('data-video-url') === source.src) {
+                    if (i + 1 < liListSize
+                        && prevLi != null && prevLi.getAttribute('data-video-url') == null
+                        && liList[i + 1].getAttribute('data-video-url') == null) {
+                        ol.removeChild(prevLi);
+                    }
+                    ol.removeChild(li);
+                    break
+                }
+                prevLi = li;
+            }
+
+
+            video.removeChild(source);
+            if (sourceListSize > 1) {
+                playVideo(sourceList[(srcIndex + 1) % sourceListSize]);
+            }
+
+        }
+
 
     </script>
 
@@ -283,7 +326,7 @@
     <video id="myVideo" autoplay controls muted preload="auto"
            style="width: 100%; height:100% ; padding:0;margin: 0; position: fixed;left: auto;right: auto; top: 0; bottom: 0; z-index: 100;"
            poster="宋轶-消防员.jpeg"
-           onended="continuePlay()">
+           onended="playEndedHandler()" onerror="playErrorHandler()">
     </video>
 </div>
 <div id="myVideoList" hidden="hidden"
